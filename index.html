@@ -10,23 +10,58 @@
     <title>AI News App</title>
     <!-- 预加载关键资源 -->
     <link rel="preload" href="/src/main.ts" as="script" type="application/javascript" crossorigin="anonymous">
+    <!-- 添加CSP策略，允许内联脚本和样式 -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https: http:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https: http:; style-src 'self' 'unsafe-inline' https: http:; img-src 'self' data: https: http:; connect-src 'self' https: http:; font-src 'self' data: https: http:;">
   </head>
   <body>
     <div id="app"></div>
     <script type="module" src="/src/main.ts"></script>
     <!-- 添加兼容性脚本，处理MIME类型问题 -->
     <script>
+      // 全局变量，用于跟踪已经尝试重新加载的脚本
+      window.__RETRY_SCRIPTS__ = {};
+      
       // 处理可能的MIME类型错误
       window.addEventListener('error', function(e) {
         if (e.target && e.target.tagName === 'SCRIPT') {
           var src = e.target.src || '';
-          if (src.includes('assets/') || src.includes('.js')) {
+          // 避免重复尝试加载同一个脚本
+          if ((src.includes('assets/') || src.includes('.js')) && !window.__RETRY_SCRIPTS__[src]) {
             console.warn('Script loading error detected, attempting to fix:', src);
+            // 标记此脚本已尝试重新加载
+            window.__RETRY_SCRIPTS__[src] = true;
+            
             // 创建新的脚本元素，明确指定类型
             var newScript = document.createElement('script');
             newScript.src = src + '?t=' + Date.now(); // 添加时间戳避免缓存
             newScript.type = 'application/javascript';
             newScript.crossOrigin = 'anonymous';
+            
+            // 添加加载和错误处理
+            newScript.onload = function() {
+              console.log('Script successfully reloaded:', src);
+            };
+            newScript.onerror = function() {
+              console.error('Failed to reload script:', src);
+              // 尝试使用fetch手动加载脚本内容
+              fetch(src + '?t=' + Date.now())
+                .then(function(response) {
+                  if (!response.ok) throw new Error('Network response was not ok');
+                  return response.text();
+                })
+                .then(function(code) {
+                  // 创建内联脚本
+                  var inlineScript = document.createElement('script');
+                  inlineScript.type = 'application/javascript';
+                  inlineScript.textContent = code;
+                  document.head.appendChild(inlineScript);
+                  console.log('Script loaded via fetch and inline execution:', src);
+                })
+                .catch(function(error) {
+                  console.error('Failed to fetch script content:', error);
+                });
+            };
+            
             document.head.appendChild(newScript);
             // 阻止原始错误继续传播
             e.preventDefault();
@@ -41,13 +76,34 @@
             typeof event.reason.message === 'string' && 
             event.reason.message.includes('Failed to fetch dynamically imported module')) {
           console.warn('Dynamic import error detected:', event.reason.message);
-          event.preventDefault();
-          // 通知主应用发生了错误
-          if (window.dispatchEvent) {
-            window.dispatchEvent(new CustomEvent('qiankun:error', { 
-              detail: { message: '资源加载失败，请刷新页面重试' } 
-            }));
+          
+          // 尝试提取URL
+          var match = event.reason.message.match(/https:\/\/[^"'\s]+/);
+          if (match && match[0] && !window.__RETRY_SCRIPTS__[match[0]]) {
+            var scriptUrl = match[0];
+            window.__RETRY_SCRIPTS__[scriptUrl] = true;
+            console.log('Attempting to reload failed module:', scriptUrl);
+            
+            // 尝试使用fetch手动加载脚本内容
+            fetch(scriptUrl + '?t=' + Date.now())
+              .then(function(response) {
+                if (!response.ok) throw new Error('Network response was not ok');
+                return response.text();
+              })
+              .then(function(code) {
+                // 创建内联脚本
+                var inlineScript = document.createElement('script');
+                inlineScript.type = 'application/javascript';
+                inlineScript.textContent = code;
+                document.head.appendChild(inlineScript);
+                console.log('Module loaded via fetch and inline execution:', scriptUrl);
+              })
+              .catch(function(error) {
+                console.error('Failed to fetch module content:', error);
+              });
           }
+          
+          event.preventDefault();
         }
       });
       
@@ -67,6 +123,20 @@
           }
         }
       });
+      
+      // 修复可能的MIME类型问题
+      (function() {
+        // 重写document.createElement方法，确保创建的script元素具有正确的类型
+        var originalCreateElement = document.createElement;
+        document.createElement = function(tagName) {
+          var element = originalCreateElement.call(document, tagName);
+          if (tagName.toLowerCase() === 'script') {
+            element.type = 'application/javascript';
+            element.crossOrigin = 'anonymous';
+          }
+          return element;
+        };
+      })();
     </script>
   </body>
 </html>

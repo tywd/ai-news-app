@@ -5,75 +5,92 @@ import App from './App.vue'
 import './style.css'
 
 // 定义动态公共路径变量
-// Vite不使用webpack，所以需要自己定义这个变量
 // @ts-ignore
 window.__INJECTED_PUBLIC_PATH__ = '/'
+
+// 创建一个全局错误处理函数，用于处理所有类型的资源加载错误
+const handleResourceError = (event: Event | ErrorEvent) => {
+  const target = event.target as HTMLElement;
+  if (target && target.tagName === 'SCRIPT') {
+    console.error('Script loading error detected:', (event as ErrorEvent).message || 'Unknown error');
+    
+    // 尝试重新加载脚本，使用正确的MIME类型
+    const scriptSrc = (target as HTMLScriptElement).src;
+    if (scriptSrc) {
+      console.log('Attempting to reload script with correct MIME type:', scriptSrc);
+      
+      // 移除原始脚本
+      target.remove();
+      
+      // 创建新的脚本元素
+      const newScript = document.createElement('script');
+      newScript.src = `${scriptSrc}?t=${Date.now()}`; // 添加时间戳避免缓存
+      newScript.type = 'application/javascript';
+      newScript.crossOrigin = 'anonymous';
+      
+      // 添加加载和错误处理
+      newScript.onload = () => console.log('Script successfully reloaded:', scriptSrc);
+      newScript.onerror = () => console.error('Failed to reload script:', scriptSrc);
+      
+      // 添加到文档
+      document.head.appendChild(newScript);
+      
+      // 阻止错误继续传播
+      event.preventDefault();
+      event.stopPropagation();
+      return false;
+    }
+  }
+};
 
 // 确保在qiankun环境中正确加载资源
 if (qiankunWindow.__POWERED_BY_QIANKUN__) {
   // 动态设置公共路径
   // @ts-ignore
-  window.__INJECTED_PUBLIC_PATH__ = qiankunWindow.__INJECTED_PUBLIC_PATH_BY_QIANKUN__
-  console.log('Running in qiankun mode, public path:', window.__INJECTED_PUBLIC_PATH__)
+  window.__INJECTED_PUBLIC_PATH__ = qiankunWindow.__INJECTED_PUBLIC_PATH_BY_QIANKUN__ || '/';
+  console.log('Running in qiankun mode, public path:', window.__INJECTED_PUBLIC_PATH__);
   
-  // 开发环境特殊处理
-  if (import.meta.env.DEV) {
-    console.log('Running in development qiankun mode')
-    // 在开发环境中，需要特殊处理Vite的HMR客户端
-    // 这里不做任何处理，让Vite的开发服务器正常工作
-  } else {
-    // 生产环境下，为了解决MIME类型问题，手动设置资源类型
-    const setResourceType = () => {
-      const scripts = document.querySelectorAll('script');
-      scripts.forEach(script => {
-        if (script.type !== 'module' && !script.type) {
-          script.type = 'application/javascript';
-        }
-      });
-    };
-    
-    // 在DOM更新后执行
-    setTimeout(setResourceType, 100);
-    
-    // 添加全局错误处理，捕获资源加载错误
-    window.addEventListener('error', (event) => {
-      const target = event.target as HTMLElement;
-      if (target && target.tagName === 'SCRIPT') {
-        console.error('Script loading error:', event);
-        // 尝试重新加载脚本，使用正确的MIME类型
-        const scriptSrc = (target as HTMLScriptElement).src;
-        if (scriptSrc) {
-          console.log('Attempting to reload script with correct MIME type:', scriptSrc);
-          const newScript = document.createElement('script');
-          newScript.src = scriptSrc;
-          newScript.type = 'application/javascript';
-          newScript.crossOrigin = 'anonymous';
-          document.head.appendChild(newScript);
-          return false; // 阻止错误继续传播
-        }
+  // 添加全局错误处理
+  window.addEventListener('error', handleResourceError, true);
+  
+  // 处理动态导入错误
+  window.addEventListener('unhandledrejection', (event) => {
+    if (event.reason && typeof event.reason.message === 'string' && 
+        event.reason.message.includes('Failed to fetch dynamically imported module')) {
+      console.error('Dynamic import error:', event.reason.message);
+      
+      // 尝试提取URL
+      const match = event.reason.message.match(/https:\/\/[^"'\s]+/);
+      if (match && match[0]) {
+        const scriptUrl = match[0];
+        console.log('Attempting to reload failed module:', scriptUrl);
+        
+        // 创建新的脚本元素
+        const script = document.createElement('script');
+        script.src = `${scriptUrl}?t=${Date.now()}`;
+        script.type = 'application/javascript';
+        script.crossOrigin = 'anonymous';
+        document.head.appendChild(script);
+        
+        // 通知主应用
+        window.dispatchEvent(new CustomEvent('qiankun:warning', { 
+          detail: { message: '正在尝试修复资源加载问题...' } 
+        }));
+        
+        event.preventDefault();
       }
-    }, true);
-    
-    // 添加动态导入错误处理
-    window.addEventListener('unhandledrejection', (event) => {
-      if (event.reason && typeof event.reason.message === 'string' && 
-          event.reason.message.includes('Failed to fetch dynamically imported module')) {
-        console.error('Dynamic import error:', event.reason);
-        // 尝试通过添加时间戳参数绕过缓存重新加载
-        const match = event.reason.message.match(/https:\/\/[^"]+/);
-        if (match && match[0]) {
-          const scriptUrl = match[0];
-          console.log('Attempting to reload failed module:', scriptUrl);
-          const script = document.createElement('script');
-          script.src = `${scriptUrl}?t=${Date.now()}`;
-          script.type = 'application/javascript';
-          script.crossOrigin = 'anonymous';
-          document.head.appendChild(script);
-          event.preventDefault();
-        }
-      }
-    });
-  }
+    }
+  });
+  
+  // 检查容器元素
+  setTimeout(() => {
+    if (!document.getElementById('subapp-container')) {
+      console.error('Container #subapp-container not found in parent application');
+      window.dispatchEvent(new CustomEvent('qiankun:error', { 
+        detail: { message: '子应用容器未找到，请检查主应用配置' } 
+      }));
+    }
+  }, 100);
 } else if (import.meta.env.PROD) {
   // 在生产环境下，如果不是在qiankun环境中，则设置正确的资源路径
   // @ts-ignore
