@@ -4,8 +4,8 @@
   "framework": "vite",
   "routes": [
     { 
-      "src": "/assets/(.*)\\.js", 
-      "dest": "/assets/$1.js",
+      "src": "/(assets|)/(.*)\\.js", 
+      "dest": "/$1/$2.js",
       "headers": {
         "Content-Type": "application/javascript; charset=utf-8",
         "Access-Control-Allow-Origin": "*",
@@ -15,31 +15,22 @@
       }
     },
     { 
-      "src": "/assets/(.*)\\.css", 
-      "dest": "/assets/$1.css",
-      "headers": {
-        "Content-Type": "text/css; charset=utf-8",
-        "Access-Control-Allow-Origin": "*",
-        "Cache-Control": "public, max-age=31536000, immutable"
-      }
-    },
-    {
-      "src": "/(assets/.*)\\.js", 
-      "dest": "/$1.js",
+      "src": "/(assets|)/(.*)\\.ts", 
+      "dest": "/$1/$2.ts",
       "headers": {
         "Content-Type": "application/javascript; charset=utf-8",
         "Access-Control-Allow-Origin": "*",
         "Access-Control-Allow-Methods": "GET, OPTIONS",
-        "Cache-Control": "public, max-age=31536000, immutable"
+        "Cache-Control": "public, max-age=31536000, immutable",
+        "X-Content-Type-Options": "nosniff"
       }
     },
     { 
-      "src": "/(.*)\\.js", 
-      "dest": "/$1.js",
+      "src": "/(assets|)/(.*)\\.css", 
+      "dest": "/$1/$2.css",
       "headers": {
-        "Content-Type": "application/javascript; charset=utf-8",
+        "Content-Type": "text/css; charset=utf-8",
         "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "GET, OPTIONS",
         "Cache-Control": "public, max-age=31536000, immutable"
       }
     },

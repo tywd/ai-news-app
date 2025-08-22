@@ -23,7 +23,8 @@ export default defineConfig(({ mode }) => ({
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url))
-    }
+    },
+    extensions: ['.mjs', '.js', '.ts', '.jsx', '.tsx', '.json', '.vue']
   },
   // 生产环境下的基础路径，用于部署到 Vercel
   base: '/',  // 使用绝对路径而不是相对路径
@@ -42,8 +43,16 @@ export default defineConfig(({ mode }) => ({
     rollupOptions: {
       output: {
         manualChunks: undefined,
-        // 使用绝对路径
-        assetFileNames: 'assets/[name].[hash].[ext]',
+        // 确保所有文件都使用正确的扩展名
+        assetFileNames: (assetInfo) => {
+          const info = assetInfo.name.split('.');
+          const extType = info[info.length - 1];
+          if (/\.(css|svg|png|jpe?g|gif|webp)$/.test(assetInfo.name)) {
+            return `assets/[name].[hash].[ext]`;
+          }
+          // 所有其他文件都使用.js扩展名
+          return `assets/[name].[hash].js`;
+        },
         chunkFileNames: 'assets/[name].[hash].js',
         entryFileNames: 'assets/[name].[hash].js',
         // 确保生成的资源使用正确的MIME类型
