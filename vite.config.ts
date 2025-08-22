@@ -4,11 +4,11 @@ import vue from '@vitejs/plugin-vue'
 import qiankun from 'vite-plugin-qiankun'
 
 // https://vitejs.dev/config/
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   plugins: [
     vue(),
     qiankun('ai-news-app', {
-      useDevMode: true
+      useDevMode: mode === 'development' // 根据环境动态设置，兼容开发和生产环境
     })
   ],
   server: {
@@ -41,4 +41,4 @@ export default defineConfig({
       }
     }
   }
-})
+}))

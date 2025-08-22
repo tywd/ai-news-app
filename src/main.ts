@@ -15,6 +15,26 @@ if (qiankunWindow.__POWERED_BY_QIANKUN__) {
   // @ts-ignore
   window.__INJECTED_PUBLIC_PATH__ = qiankunWindow.__INJECTED_PUBLIC_PATH_BY_QIANKUN__
   console.log('Running in qiankun mode, public path:', window.__INJECTED_PUBLIC_PATH__)
+  
+  // 开发环境特殊处理
+  if (import.meta.env.DEV) {
+    console.log('Running in development qiankun mode')
+    // 在开发环境中，需要特殊处理Vite的HMR客户端
+    // 这里不做任何处理，让Vite的开发服务器正常工作
+  } else {
+    // 生产环境下，为了解决MIME类型问题，手动设置资源类型
+    const setResourceType = () => {
+      const scripts = document.querySelectorAll('script');
+      scripts.forEach(script => {
+        if (script.type !== 'module' && !script.type) {
+          script.type = 'application/javascript';
+        }
+      });
+    };
+    
+    // 在DOM更新后执行
+    setTimeout(setResourceType, 100);
+  }
 } else if (import.meta.env.PROD) {
   // 在生产环境下，如果不是在qiankun环境中，则设置正确的资源路径
   // @ts-ignore
