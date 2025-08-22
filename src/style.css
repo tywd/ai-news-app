@@ -8,9 +8,23 @@
 .ai-news-app {
   all: initial;
   font-family: 'Avenir', Helvetica, Arial, sans-serif;
+  display: block; /* 修复all: initial导致的显示问题 */
 }
 
 /* 子应用内部的样式 */
 .ai-news-app * {
   box-sizing: border-box;
+}
+
+/* 子应用独立运行时的样式 */
+.ai-news-app[data-qiankun="false"] .app-header {
+  background-color: #4fc08d;
+  color: white;
+  padding: 10px;
+  margin-bottom: 20px;
+}
+
+/* 子应用在qiankun中运行时的样式 */
+.ai-news-app[data-qiankun="true"] {
+  padding: 10px;
 }

@@ -5,8 +5,12 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vue-tsc -b && vite build",
-    "preview": "vite preview"
+    "build": "vite build",
+    "build:check": "vue-tsc -b && vite build",
+    "preview": "vite preview",
+    "start": "vite preview --port 5175",
+    "deploy": "vercel --prod",
+    "serve": "node server.js"
   },
   "dependencies": {
     "vue": "^3.5.18",

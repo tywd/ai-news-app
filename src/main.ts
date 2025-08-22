@@ -4,6 +4,22 @@ import { renderWithQiankun, qiankunWindow } from 'vite-plugin-qiankun/dist/helpe
 import App from './App.vue'
 import './style.css'
 
+// 定义动态公共路径变量
+// Vite不使用webpack，所以需要自己定义这个变量
+// @ts-ignore
+window.__INJECTED_PUBLIC_PATH__ = '/'
+
+// 确保在qiankun环境中正确加载资源
+if (qiankunWindow.__POWERED_BY_QIANKUN__) {
+  // 动态设置公共路径
+  // @ts-ignore
+  window.__INJECTED_PUBLIC_PATH__ = qiankunWindow.__INJECTED_PUBLIC_PATH_BY_QIANKUN__
+} else if (import.meta.env.PROD) {
+  // 在生产环境下，如果不是在qiankun环境中，则设置正确的资源路径
+  // @ts-ignore
+  window.__INJECTED_PUBLIC_PATH__ = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1)
+}
+
 // 路由配置
 const routes = [
   {
@@ -22,7 +38,8 @@ function render(props: any = {}) {
   const { container, baseRoute } = props
   
   // 创建路由实例，处理基础路径
-  history = createWebHistory(qiankunWindow.__POWERED_BY_QIANKUN__ ? baseRoute : '/')
+  const basePath = qiankunWindow.__POWERED_BY_QIANKUN__ ? baseRoute : import.meta.env.BASE_URL || '/'
+  history = createWebHistory(basePath)
   router = createRouter({
     history,
     routes
@@ -34,13 +51,24 @@ function render(props: any = {}) {
   
   // 挂载应用
   const targetContainer = qiankunWindow.__POWERED_BY_QIANKUN__ ? container : document.getElementById('app')
-  app.mount(targetContainer)
+  app.mount(targetContainer instanceof Element ? targetContainer : '#app')
+}
+
+// 定义qiankun生命周期钩子的参数类型
+interface QiankunProps {
+  container?: HTMLElement;
+  baseRoute?: string;
+  actions?: {
+    setLoading?: (loading: boolean) => void;
+    [key: string]: any;
+  };
+  [key: string]: any;
 }
 
 // qiankun 生命周期钩子
 renderWithQiankun({
   // 应用初始化
-  mount(props) {
+  mount(props: QiankunProps) {
     console.log('AI News App mounted with props:', props)
     render(props)
     
@@ -59,7 +87,7 @@ renderWithQiankun({
     console.log('AI News App bootstrapped')
   },
   // 应用更新
-  update(props) {
+  update(props: QiankunProps) {
     console.log('AI News App updated with props:', props)
   },
   // 应用卸载
