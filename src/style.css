@@ -1,0 +1,16 @@
+/* 重置全局样式，确保不影响主应用 */
+.ai-news-app #app {
+  padding: 0;
+  margin: 0;
+}
+
+/* 确保子应用的样式不会泄漏到主应用 */
+.ai-news-app {
+  all: initial;
+  font-family: 'Avenir', Helvetica, Arial, sans-serif;
+}
+
+/* 子应用内部的样式 */
+.ai-news-app * {
+  box-sizing: border-box;
+}
