@@ -22,7 +22,7 @@ export default defineConfig({
     }
   },
   // 生产环境下的基础路径，用于部署到 Vercel
-  base: './',
+  base: '/',
   build: {
     // 确保正确生成资源路径
     assetsDir: 'assets',

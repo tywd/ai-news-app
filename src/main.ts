@@ -14,10 +14,17 @@ if (qiankunWindow.__POWERED_BY_QIANKUN__) {
   // 动态设置公共路径
   // @ts-ignore
   window.__INJECTED_PUBLIC_PATH__ = qiankunWindow.__INJECTED_PUBLIC_PATH_BY_QIANKUN__
+  console.log('Running in qiankun mode, public path:', window.__INJECTED_PUBLIC_PATH__)
 } else if (import.meta.env.PROD) {
   // 在生产环境下，如果不是在qiankun环境中，则设置正确的资源路径
   // @ts-ignore
   window.__INJECTED_PUBLIC_PATH__ = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1)
+  console.log('Running in production standalone mode, public path:', window.__INJECTED_PUBLIC_PATH__)
+} else {
+  // 在开发环境下，如果不是在qiankun环境中，则设置正确的资源路径
+  // @ts-ignore
+  window.__INJECTED_PUBLIC_PATH__ = '/'
+  console.log('Running in development standalone mode, public path: /')
 }
 
 // 路由配置
@@ -76,7 +83,7 @@ renderWithQiankun({
     if (props.actions) {
       // 延迟一点时间确保应用完全渲染
       setTimeout(() => {
-        if (props.actions.setLoading) {
+        if (props.actions?.setLoading) {
           props.actions.setLoading(false)
         }
       }, 100)
