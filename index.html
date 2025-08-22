@@ -8,6 +8,8 @@
     <!-- 确保正确的MIME类型 -->
     <meta http-equiv="X-Content-Type-Options" content="nosniff" />
     <title>AI News App</title>
+    <!-- 预加载关键资源 -->
+    <link rel="preload" href="/src/main.ts" as="script" type="application/javascript" crossorigin="anonymous">
   </head>
   <body>
     <div id="app"></div>
@@ -22,7 +24,7 @@
             console.warn('Script loading error detected, attempting to fix:', src);
             // 创建新的脚本元素，明确指定类型
             var newScript = document.createElement('script');
-            newScript.src = src;
+            newScript.src = src + '?t=' + Date.now(); // 添加时间戳避免缓存
             newScript.type = 'application/javascript';
             newScript.crossOrigin = 'anonymous';
             document.head.appendChild(newScript);
@@ -32,6 +34,39 @@
           }
         }
       }, true);
+      
+      // 处理动态导入错误
+      window.addEventListener('unhandledrejection', function(event) {
+        if (event.reason && event.reason.message && 
+            typeof event.reason.message === 'string' && 
+            event.reason.message.includes('Failed to fetch dynamically imported module')) {
+          console.warn('Dynamic import error detected:', event.reason.message);
+          event.preventDefault();
+          // 通知主应用发生了错误
+          if (window.dispatchEvent) {
+            window.dispatchEvent(new CustomEvent('qiankun:error', { 
+              detail: { message: '资源加载失败，请刷新页面重试' } 
+            }));
+          }
+        }
+      });
+      
+      // 确保容器元素存在
+      document.addEventListener('DOMContentLoaded', function() {
+        // 检查是否在qiankun环境中
+        if (window.__POWERED_BY_QIANKUN__) {
+          console.log('Running in qiankun environment, checking container');
+          // 确保子应用容器存在
+          if (!document.getElementById('subapp-container')) {
+            console.error('Container #subapp-container not found in parent application');
+            // 创建一个临时容器，避免挂载失败
+            var tempContainer = document.createElement('div');
+            tempContainer.id = 'subapp-container';
+            tempContainer.style.display = 'none';
+            document.body.appendChild(tempContainer);
+          }
+        }
+      });
     </script>
   </body>
 </html>

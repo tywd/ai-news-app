@@ -23,6 +23,16 @@
         "Cache-Control": "public, max-age=31536000, immutable"
       }
     },
+    {
+      "src": "/(assets/.*)\\.js", 
+      "dest": "/$1.js",
+      "headers": {
+        "Content-Type": "application/javascript; charset=utf-8",
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, OPTIONS",
+        "Cache-Control": "public, max-age=31536000, immutable"
+      }
+    },
     { 
       "src": "/(.*)\\.js", 
       "dest": "/$1.js",

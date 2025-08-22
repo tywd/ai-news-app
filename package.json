@@ -4,13 +4,15 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --port 5175",
     "build": "vite build",
     "build:check": "vue-tsc -b && vite build",
     "preview": "vite preview --port 8889 --host",
     "start": "node server.js",
     "deploy": "vercel --prod",
-    "serve": "node server.js"
+    "serve": "node server.js",
+    "clean": "rm -rf dist",
+    "rebuild": "npm run clean && npm run build"
   },
   "dependencies": {
     "vue": "^3.5.18",

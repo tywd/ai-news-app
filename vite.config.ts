@@ -26,7 +26,7 @@ export default defineConfig(({ mode }) => ({
     }
   },
   // 生产环境下的基础路径，用于部署到 Vercel
-  base: mode === 'development' ? '/' : './',
+  base: '/',  // 使用绝对路径而不是相对路径
   build: {
     // 确保正确生成资源路径
     assetsDir: 'assets',
@@ -42,7 +42,7 @@ export default defineConfig(({ mode }) => ({
     rollupOptions: {
       output: {
         manualChunks: undefined,
-        // 确保生成的资源使用相对路径
+        // 使用绝对路径
         assetFileNames: 'assets/[name].[hash].[ext]',
         chunkFileNames: 'assets/[name].[hash].js',
         entryFileNames: 'assets/[name].[hash].js',

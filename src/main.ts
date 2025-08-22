@@ -47,10 +47,32 @@ if (qiankunWindow.__POWERED_BY_QIANKUN__) {
           const newScript = document.createElement('script');
           newScript.src = scriptSrc;
           newScript.type = 'application/javascript';
+          newScript.crossOrigin = 'anonymous';
           document.head.appendChild(newScript);
+          return false; // 阻止错误继续传播
         }
       }
     }, true);
+    
+    // 添加动态导入错误处理
+    window.addEventListener('unhandledrejection', (event) => {
+      if (event.reason && typeof event.reason.message === 'string' && 
+          event.reason.message.includes('Failed to fetch dynamically imported module')) {
+        console.error('Dynamic import error:', event.reason);
+        // 尝试通过添加时间戳参数绕过缓存重新加载
+        const match = event.reason.message.match(/https:\/\/[^"]+/);
+        if (match && match[0]) {
+          const scriptUrl = match[0];
+          console.log('Attempting to reload failed module:', scriptUrl);
+          const script = document.createElement('script');
+          script.src = `${scriptUrl}?t=${Date.now()}`;
+          script.type = 'application/javascript';
+          script.crossOrigin = 'anonymous';
+          document.head.appendChild(script);
+          event.preventDefault();
+        }
+      }
+    });
   }
 } else if (import.meta.env.PROD) {
   // 在生产环境下，如果不是在qiankun环境中，则设置正确的资源路径
