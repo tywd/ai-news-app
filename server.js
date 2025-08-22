@@ -72,7 +72,7 @@ const server = createServer((req, res) => {
 });
 
 // 设置端口
-const PORT = 5175;
+const PORT = 8888;
 
 // 启动服务器
 server.listen(PORT, () => {
