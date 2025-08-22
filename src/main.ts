@@ -34,6 +34,23 @@ if (qiankunWindow.__POWERED_BY_QIANKUN__) {
     
     // 在DOM更新后执行
     setTimeout(setResourceType, 100);
+    
+    // 添加全局错误处理，捕获资源加载错误
+    window.addEventListener('error', (event) => {
+      const target = event.target as HTMLElement;
+      if (target && target.tagName === 'SCRIPT') {
+        console.error('Script loading error:', event);
+        // 尝试重新加载脚本，使用正确的MIME类型
+        const scriptSrc = (target as HTMLScriptElement).src;
+        if (scriptSrc) {
+          console.log('Attempting to reload script with correct MIME type:', scriptSrc);
+          const newScript = document.createElement('script');
+          newScript.src = scriptSrc;
+          newScript.type = 'application/javascript';
+          document.head.appendChild(newScript);
+        }
+      }
+    }, true);
   }
 } else if (import.meta.env.PROD) {
   // 在生产环境下，如果不是在qiankun环境中，则设置正确的资源路径
@@ -62,7 +79,23 @@ let history: ReturnType<typeof createWebHistory> | null = null
 
 // 创建 Vue 应用实例的函数
 function render(props: any = {}) {
-  const { container, baseRoute } = props
+  const { container, baseRoute, scriptAttrs } = props
+  
+  // 处理脚本属性，解决MIME类型问题
+  if (scriptAttrs && import.meta.env.PROD) {
+    // 为所有动态加载的脚本设置正确的MIME类型
+    const originalCreateElement = document.createElement;
+    document.createElement = function(tagName: string) {
+      const element = originalCreateElement.call(document, tagName);
+      if (tagName.toLowerCase() === 'script') {
+        // 为脚本元素设置属性
+        Object.keys(scriptAttrs).forEach(key => {
+          element.setAttribute(key, scriptAttrs[key]);
+        });
+      }
+      return element;
+    };
+  }
   
   // 创建路由实例，处理基础路径
   const basePath = qiankunWindow.__POWERED_BY_QIANKUN__ ? baseRoute : import.meta.env.BASE_URL || '/'

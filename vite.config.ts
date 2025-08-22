@@ -14,7 +14,11 @@ export default defineConfig(({ mode }) => ({
   server: {
     port: 5175, // 与主应用中配置的端口一致
     cors: true,
-    origin: 'http://localhost:5175'
+    origin: 'http://localhost:5175',
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Content-Type': 'application/javascript; charset=utf-8'
+    }
   },
   resolve: {
     alias: {
@@ -22,7 +26,7 @@ export default defineConfig(({ mode }) => ({
     }
   },
   // 生产环境下的基础路径，用于部署到 Vercel
-  base: '/',
+  base: mode === 'development' ? '/' : './',
   build: {
     // 确保正确生成资源路径
     assetsDir: 'assets',
@@ -30,6 +34,10 @@ export default defineConfig(({ mode }) => ({
     target: 'esnext',
     // 确保正确处理CSS
     cssCodeSplit: false,
+    // 确保资源能够被正确加载
+    modulePreload: {
+      polyfill: true
+    },
     // 确保正确处理静态资源
     rollupOptions: {
       output: {
@@ -37,7 +45,9 @@ export default defineConfig(({ mode }) => ({
         // 确保生成的资源使用相对路径
         assetFileNames: 'assets/[name].[hash].[ext]',
         chunkFileNames: 'assets/[name].[hash].js',
-        entryFileNames: 'assets/[name].[hash].js'
+        entryFileNames: 'assets/[name].[hash].js',
+        // 确保生成的资源使用正确的MIME类型
+        format: 'es'
       }
     }
   }

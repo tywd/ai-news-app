@@ -5,10 +5,33 @@
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <!-- 确保正确的MIME类型 -->
+    <meta http-equiv="X-Content-Type-Options" content="nosniff" />
     <title>AI News App</title>
   </head>
   <body>
     <div id="app"></div>
     <script type="module" src="/src/main.ts"></script>
+    <!-- 添加兼容性脚本，处理MIME类型问题 -->
+    <script>
+      // 处理可能的MIME类型错误
+      window.addEventListener('error', function(e) {
+        if (e.target && e.target.tagName === 'SCRIPT') {
+          var src = e.target.src || '';
+          if (src.includes('assets/') || src.includes('.js')) {
+            console.warn('Script loading error detected, attempting to fix:', src);
+            // 创建新的脚本元素，明确指定类型
+            var newScript = document.createElement('script');
+            newScript.src = src;
+            newScript.type = 'application/javascript';
+            newScript.crossOrigin = 'anonymous';
+            document.head.appendChild(newScript);
+            // 阻止原始错误继续传播
+            e.preventDefault();
+            return false;
+          }
+        }
+      }, true);
+    </script>
   </body>
 </html>

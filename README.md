@@ -41,7 +41,7 @@ pnpm preview
 {
   name: 'ai-news-app',
   entry: import.meta.env.MODE === 'development'
-    ? 'http://localhost:5176/' // 本地开发环境
+    ? 'http://localhost:5175/' // 本地开发环境
     : 'https://ai-news-app-two.vercel.app/', // 线上环境
   container: '#subapp-container',
   activeRule: '/micro/ai-news-app',
